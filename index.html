@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Registration - Vuetify</title>
+    
+    <!-- Vuetify CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/vuetify@3.4.0/dist/vuetify.min.css" rel="stylesheet">
+    <!-- Material Design Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/@mdi/font@7.2.96/css/materialdesignicons.min.css" rel="stylesheet">
+    
+    <!-- Vue 3 -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <!-- Vuetify -->
+    <script src="https://cdn.jsdelivr.net/npm/vuetify@3.4.0/dist/vuetify.min.js"></script>
+    <!-- Axios -->
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+</head>
+<body>
+    <div id="app">
+        <v-app>
+            <v-app-bar color="primary" dark>
+                <v-app-bar-title>
+                    <v-icon left>mdi-school</v-icon>
+                    Student Registration System
+                </v-app-bar-title>
+            </v-app-bar>
+
+            <v-main>
+                <v-container>
+                    <v-row>
+                        <!-- Add Student Component - Use kebab-case -->
+                        <v-col cols="12" md="5">
+                            <add-student 
+                                :loading="loading"
+                                @student-added="onStudentAdded"
+                                @show-message="showMessage"
+                            />
+                        </v-col>
+
+                        <!-- Student List Component - Use kebab-case -->
+                        <v-col cols="12" md="7">
+                            <student-list 
+                                :students="students"
+                                :loading="loading"
+                                @view-student="viewStudent"
+                                @edit-student="editStudent"
+                                @delete-student="deleteStudent"
+                                @refresh-students="loadStudents"
+                            />
+                        </v-col>
+                    </v-row>
+                </v-container>
+            </v-main>
+
+            <!-- Rest of your dialogs and snackbar remain the same -->
+            <v-snackbar
+                v-model="snackbar"
+                :color="messageType"
+                :timeout="4000"
+                location="top"
+            >
+                {{ message }}
+                <template v-slot:actions>
+                    <v-btn
+                        variant="text"
+                        @click="snackbar = false"
+                    >
+                        Close
+                    </v-btn>
+                </template>
+            </v-snackbar>
+
+            <!-- Student Details/Edit Dialog -->
+            <v-dialog v-model="detailsDialog" max-width="600" persistent>
+                <v-card v-if="selectedStudent">
+                    <v-card-title class="text-h5" :class="isEditMode ? 'secondary white--text' : 'primary white--text'">
+                        <v-icon left color="white">{{ isEditMode ? 'mdi-pencil' : 'mdi-account-details' }}</v-icon>
+                        {{ isEditMode ? 'Edit Student' : 'Student Details' }}
+                    </v-card-title>
+                    
+                    <v-card-text class="pa-6">
+                        <!-- View Mode -->
+                        <div v-if="!isEditMode">
+                            <v-row>
+                                <v-col cols="12" class="text-center mb-4">
+                                    <v-avatar size="80" color="primary">
+                                        <v-icon size="40" color="white">mdi-account</v-icon>
+                                    </v-avatar>
+                                    <h2 class="mt-3">{{ selectedStudent.name }}</h2>
+                                    <v-chip color="info" variant="flat">
+                                        {{ selectedStudent.major }}
+                                    </v-chip>
+                                </v-col>
+                                <v-col cols="12">
+                                    <v-list>
+                                        <v-list-item>
+                                            <template v-slot:prepend>
+                                                <v-icon color="primary">mdi-identifier</v-icon>
+                                            </template>
+                                            <v-list-item-title>Student ID</v-list-item-title>
+                                            <v-list-item-subtitle>#{{ selectedStudent.id }}</v-list-item-subtitle>
+                                        </v-list-item>
+                                        <v-list-item>
+                                            <template v-slot:prepend>
+                                                <v-icon color="primary">mdi-email</v-icon>
+                                            </template>
+                                            <v-list-item-title>Email Address</v-list-item-title>
+                                            <v-list-item-subtitle>{{ selectedStudent.email }}</v-list-item-subtitle>
+                                        </v-list-item>
+                                        <v-list-item>
+                                            <template v-slot:prepend>
+                                                <v-icon color="primary">mdi-map-marker</v-icon>
+                                            </template>
+                                            <v-list-item-title>Address</v-list-item-title>
+                                            <v-list-item-subtitle>{{ selectedStudent.address }}</v-list-item-subtitle>
+                                        </v-list-item>
+                                    </v-list>
+                                </v-col>
+                            </v-row>
+                        </div>
+
+                        <!-- Edit Mode -->
+                        <div v-else>
+                            <v-form ref="editForm" v-model="valid">
+                                <v-text-field
+                                    v-model="editingStudent.name"
+                                    :rules="nameRules"
+                                    label="Full Name"
+                                    prepend-icon="mdi-account"
+                                    required
+                                    :disabled="updating"
+                                    variant="outlined"
+                                ></v-text-field>
+
+                                <v-text-field
+                                    v-model="editingStudent.major"
+                                    :rules="majorRules"
+                                    label="Major"
+                                    prepend-icon="mdi-book-education"
+                                    required
+                                    :disabled="updating"
+                                    variant="outlined"
+                                ></v-text-field>
+
+                                <v-text-field
+                                    v-model="editingStudent.email"
+                                    :rules="emailRules"
+                                    label="Email Address"
+                                    prepend-icon="mdi-email"
+                                    type="email"
+                                    required
+                                    :disabled="updating"
+                                    variant="outlined"
+                                ></v-text-field>
+
+                                <v-textarea
+                                    v-model="editingStudent.address"
+                                    :rules="addressRules"
+                                    label="Address"
+                                    prepend-icon="mdi-map-marker"
+                                    required
+                                    :disabled="updating"
+                                    variant="outlined"
+                                    rows="3"
+                                ></v-textarea>
+                            </v-form>
+                        </div>
+                    </v-card-text>
+
+                    <v-card-actions>
+                        <v-spacer></v-spacer>
+                        
+                        <!-- View Mode Actions -->
+                        <template v-if="!isEditMode">
+                            <v-btn @click="closeDetailsDialog">Close</v-btn>
+                        </template>
+
+                        <!-- Edit Mode Actions -->
+                        <template v-else>
+                            <v-btn
+                                @click="cancelEdit"
+                                :disabled="updating"
+                            >
+                                Cancel
+                            </v-btn>
+                            <v-btn
+                                color="primary"
+                                @click="updateStudent"
+                                :loading="updating"
+                                :disabled="!valid"
+                            >
+                                <v-icon left>mdi-content-save</v-icon>
+                                Update
+                            </v-btn>
+                        </template>
+                    </v-card-actions>
+                </v-card>
+            </v-dialog>
+
+            <!-- Delete Confirmation Dialog -->
+            <v-dialog v-model="deleteDialog" max-width="400">
+                <v-card>
+                    <v-card-title class="text-h6">
+                        <v-icon left color="red">mdi-alert</v-icon>
+                        Confirm Delete
+                    </v-card-title>
+                    <v-card-text>
+                        Are you sure you want to delete <strong>{{ studentToDelete?.name }}</strong>?
+                        <br><br>
+                        <small class="text-grey">This action cannot be undone.</small>
+                    </v-card-text>
+                    <v-card-actions>
+                        <v-spacer></v-spacer>
+                        <v-btn 
+                            @click="deleteDialog = false"
+                            :disabled="deleting"
+                        >
+                            Cancel
+                        </v-btn>
+                        <v-btn 
+                            color="red" 
+                            @click="confirmDelete"
+                            :loading="deleting"
+                        >
+                            <v-icon left>mdi-delete</v-icon>
+                            Delete
+                        </v-btn>
+                    </v-card-actions>
+                </v-card>
+            </v-dialog>
+        </v-app>
+    </div>
+
+    <!-- Import Components BEFORE main app -->
+    <script src="components/AddStudent.js"></script>
+    <script src="components/StudentList.js"></script>
+    <!-- Main App -->
+    <script src="app.js"></script>
+</body>
+</html>
