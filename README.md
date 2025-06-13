@@ -11,6 +11,11 @@ A modern web application for managing student records built with Vue 3, Vuetify,
 - 🗑️ Delete students with confirmation
 - 📱 Fully responsive design
 
+## Screenshot demo
+![](https://i.postimg.cc/qRCyDKyF/homepage.png)
+<br></br>
+![](https://i.postimg.cc/fb10dbpf/addstudent.png)
+
 ## Prerequisites
 
 - XAMPP (Apache + MySQL + PHP)
