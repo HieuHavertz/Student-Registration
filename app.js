@@ -74,7 +74,7 @@ const app = createApp({
         async loadStudents() {
             this.loading = true;
             try {
-                const response = await axios.get('api.php');
+                const response = await axios.get('api/get-student.php');
                 this.students = Array.isArray(response.data) ? response.data : [];
             } catch (error) {
                 console.error('Load students error:', error);
@@ -129,7 +129,7 @@ const app = createApp({
 
             this.updating = true;
             try {
-                const response = await axios.put('api.php', this.editingStudent);
+                const response = await axios.put('api/update-student.php', this.editingStudent);
                 
                 if (response.data.success) {
                     this.showMessage(response.data.message, 'success');
@@ -182,7 +182,7 @@ const app = createApp({
 
             this.deleting = true;
             try {
-                const response = await axios.delete(`api.php?id=${this.studentToDelete.id}`);
+                const response = await axios.delete(`api/delete-student.php?id=${this.studentToDelete.id}`);
                 
                 if (response.data.success) {
                     this.showMessage(response.data.message || 'Student deleted successfully', 'success');

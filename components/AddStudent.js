@@ -117,7 +117,7 @@ const AddStudent = {
             if (!this.valid) return;
 
             try {
-                const response = await axios.post('api.php', this.student);
+                const response = await axios.post('api/add-student.php', this.student);
                 
                 if (response.data.success) {
                     this.$emit('student-added', response.data.message);

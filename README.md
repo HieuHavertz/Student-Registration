@@ -87,15 +87,18 @@ CREATE TABLE student (
 
 ````
 student-registration/
-├── components/
-│   ├── AddStudent.js          # Add student form component
-│   └── StudentList.js         # Student list display component
+├── api/                       # API endpoints (PHP)
+│   ├── add-student.php        # Add a new student
+│   ├── get-student.php       # Fetch all students
+│   ├── update-student.php     # Update a student
+│   ├── delete-student.php     # Delete a student
+│   └── db.php                 # Database connection
+├── components/                # Vue.js components
+│   ├── AddStudent.js          # Add student form
+│   └── StudentList.js         # Student list display
 ├── index.html                 # Main HTML file
 ├── app.js                     # Vue.js main application
-├── api.php                    # PHP REST API endpoints
-├── db.php                     # Database connection
-├── test-db.php               # Database connection test (optional)
-└── README.md                 # This documentation
+└── README.md                  
 ````
 
 ## Access the application
